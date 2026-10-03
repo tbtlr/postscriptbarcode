@@ -1,3 +1,8 @@
+XXXX-XX-XX
+
+* A wideratio option was added to the two-width symbologies (Code 39, Interleaved 2 of 5, Codabar, Code 2 of 5, Code 11, MSI and Telepen, together with the encoders derived from them) to set the ratio of the wide elements to the narrow elements, within the range 2.0 to 3.0.
+
+
 2026-10-03
 
 * Wrapper encoders such as Micro QR Code and the HIBC symbologies, and encoders called with the internal _dontdraw marker, now validate spec options and apply the global spec defaults.

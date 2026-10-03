@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2024 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 % ISO/IEC 16388:2007
@@ -70,3 +70,10 @@
 { (TEST) (dontdraw) code39 /strictspec get 1 array astore } [false] isEqual
 { (TEST) (dontdraw) code39 /bhs get 0 get 1 array astore } [1.0] isEqual
 /uk.co.terryburton.bwipp.global_ctx tmp def
+
+% wideratio sets the wide to narrow element ratio via the renderer bar and space ratios
+{ (ABC) (dontdraw) code39 dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (ABC) (wideratio=2.5 dontdraw) code39 dup /barratio get exch /spaceratio get 2 array astore } [0.75 0.75] isEqual
+{ (ABC) (wideratio=2 dontdraw) code39 dup /barratio get exch /spaceratio get 2 array astore } [0.5 0.5] isEqual
+{ (ABC) (wideratio=1.9 dontdraw) code39 } /bwipp.code39badWideRatio isError
+{ (ABC) (wideratio=3.1 dontdraw) code39 } /bwipp.code39badWideRatio isError

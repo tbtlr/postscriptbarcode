@@ -41,3 +41,10 @@
 
 % strictspec smoke test
 { 0 0 moveto (ABCDEF) (strictspec xdim=0.330) telepen true } true isEqual
+
+% wideratio sets the wide to narrow element ratio via the renderer bar and space ratios
+{ (ABC) (dontdraw) telepen dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (ABC) (wideratio=2.5 dontdraw) telepen dup /barratio get exch /spaceratio get 2 array astore } [0.75 0.75] isEqual
+{ (ABC) (wideratio=2 dontdraw) telepen dup /barratio get exch /spaceratio get 2 array astore } [0.5 0.5] isEqual
+{ (ABC) (wideratio=1.9 dontdraw) telepen } /bwipp.telepenBadWideRatio isError
+{ (ABC) (wideratio=3.1 dontdraw) telepen } /bwipp.telepenBadWideRatio isError

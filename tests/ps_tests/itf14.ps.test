@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2025 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 /itf14 dup /uk.co.terryburton.bwipp findresource cvx def
@@ -89,3 +89,7 @@
     (0952876543210) (dontdraw loosespec mag=3 gridfit griddpi=72) itf14
     dup /strictspec get exch /loosespec get 2 array astore
 } [true true] isEqual
+
+% wideratio is forwarded to interleaved2of5
+{ (0952123454321) (wideratio=2.5 dontdraw) itf14 dup /barratio get exch /spaceratio get 2 array astore } [1.5 1.5] isEqual
+{ (0952123454321) (wideratio=3.1 dontdraw) itf14 } /bwipp.interleaved2of5badWideRatio isError

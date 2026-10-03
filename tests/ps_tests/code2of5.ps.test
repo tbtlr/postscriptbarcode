@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2024 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 /code2of5 dup /uk.co.terryburton.bwipp findresource cvx def
@@ -54,3 +54,10 @@
 
 % strictspec smoke test
 { 0 0 moveto (01234567) (strictspec xdim=0.330) code2of5 true } true isEqual
+
+% wideratio sets the wide to narrow element ratio via the renderer bar and space ratios
+{ (0123) (dontdraw) code2of5 dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (0123) (wideratio=2.5 dontdraw) code2of5 dup /barratio get exch /spaceratio get 2 array astore } [0.75 0.75] isEqual
+{ (0123) (wideratio=2 dontdraw) code2of5 dup /barratio get exch /spaceratio get 2 array astore } [0.5 0.5] isEqual
+{ (0123) (wideratio=1.9 dontdraw) code2of5 } /bwipp.code2of5badWideRatio isError
+{ (0123) (wideratio=3.1 dontdraw) code2of5 } /bwipp.code2of5badWideRatio isError

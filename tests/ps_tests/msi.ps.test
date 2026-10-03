@@ -58,3 +58,10 @@
 
 % propspec smoke test
 { 0 0 moveto (0123456789) (propspec) msi true } true isEqual
+
+% wideratio sets the wide to narrow element ratio via the renderer bar and space ratios
+{ (0123) (dontdraw) msi dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (0123) (wideratio=2.5 dontdraw) msi dup /barratio get exch /spaceratio get 2 array astore } [1.5 1.5] isEqual
+{ (0123) (wideratio=2 dontdraw) msi dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (0123) (wideratio=1.9 dontdraw) msi } /bwipp.msiBadWideRatio isError
+{ (0123) (wideratio=3.1 dontdraw) msi } /bwipp.msiBadWideRatio isError

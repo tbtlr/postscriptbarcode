@@ -84,6 +84,7 @@ begin
     /text1yoffset -7.0 def
     /height -1.0 def
     /width 0 def
+    /wideratio 2.0 def
 
     /propspec false def
     /loosespec false def
@@ -131,6 +132,10 @@ begin
 
     /barlen barcode length def     % Length of the code
     /txtlen barlen def
+
+    wideratio 2.0 lt wideratio 3.0 gt or {
+        /bwipp.msiBadWideRatio (wideratio must be from 2.0 to 3.0) //raiseerror exec
+    } if
 
     %
     % Apply AST spec overrides and resolve physical specification
@@ -224,6 +229,9 @@ begin
         /txt [ [barcode 0 txtlen getinterval 0 0 text1font text1size] ]
         /text1xalign (center)
     } if
+    % renlinear renders a 2 module element as 2r-r+1, giving wideratio
+    /barratio wideratio 1 sub
+    /spaceratio wideratio 1 sub
     /strictspec strictspec
     /loosespec loosespec
     /xdim xdim

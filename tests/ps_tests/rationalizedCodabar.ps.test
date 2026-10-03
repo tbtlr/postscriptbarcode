@@ -67,3 +67,10 @@
 } def
 (A0123456789B)  (includetext propspec)   ok_tmpl
 (A0123456789B)  (includetext strictspec xdim=0.330)   ok_tmpl
+
+% wideratio sets the wide to narrow element ratio via the renderer bar and space ratios
+{ (A0123B) (dontdraw) rationalizedCodabar dup /barratio get exch /spaceratio get 2 array astore } [1.0 1.0] isEqual
+{ (A0123B) (wideratio=2.5 dontdraw) rationalizedCodabar dup /barratio get exch /spaceratio get 2 array astore } [0.75 0.75] isEqual
+{ (A0123B) (wideratio=2 dontdraw) rationalizedCodabar dup /barratio get exch /spaceratio get 2 array astore } [0.5 0.5] isEqual
+{ (A0123B) (wideratio=1.9 dontdraw) rationalizedCodabar } /bwipp.rationalizedCodabarBadWideRatio isError
+{ (A0123B) (wideratio=3.1 dontdraw) rationalizedCodabar } /bwipp.rationalizedCodabarBadWideRatio isError

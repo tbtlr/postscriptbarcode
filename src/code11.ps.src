@@ -98,6 +98,7 @@ begin
     /text1yoffset -7.0 def
     /height -1.0 def
     /width 0 def
+    /wideratio 3.0 def
 
     /propspec false def
     /loosespec false def
@@ -138,6 +139,10 @@ begin
             /bwipp.code11badCharacter (Code 11 must contain only digits and dashes) //raiseerror exec
         } if
     } for
+
+    wideratio 2.0 lt wideratio 3.0 gt or {
+        /bwipp.code11badWideRatio (wideratio must be from 2.0 to 3.0) //raiseerror exec
+    } if
 
     %
     % Apply AST spec overrides and resolve physical specification
@@ -232,6 +237,9 @@ begin
         /txt [ [text 0 0 text1font text1size] ]
         /text1xalign (center)
     } if
+    % renlinear renders a 3 module element as 3r-r+1, giving wideratio
+    /barratio wideratio 1 sub 2 div
+    /spaceratio wideratio 1 sub 2 div
     /strictspec strictspec
     /loosespec loosespec
     /xdim xdim

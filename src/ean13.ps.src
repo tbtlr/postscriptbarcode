@@ -66,6 +66,7 @@ begin
     {
 
     /dontdraw false def
+    /dontvalidatecheck false def
     /includetext false def
 
     /text1font /Helvetica def
@@ -154,7 +155,7 @@ begin
         } ifelse
     } for
     /checksum 10 checksum 10 mod sub 10 mod def
-    barcode length 13 eq {
+    barcode length 13 eq dontvalidatecheck not and {
         barcode 12 get checksum 48 add ne {
             /bwipp.ean13badCheckDigit (Incorrect EAN-13 check digit provided) //raiseerror exec
         } if

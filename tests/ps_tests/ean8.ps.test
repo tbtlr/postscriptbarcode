@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2024 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 /ean8 dup /uk.co.terryburton.bwipp findresource cvx def
@@ -89,3 +89,6 @@
 (02345673 12345) (includetext permitaddon dontdraw addondescent=8)                [-0.0694 -0.1111] descents_tmpl
 (02345673 12345) (includetext permitaddon dontdraw guarddescent=8)                [-0.1111 -0.1111] descents_tmpl
 (02345673 12345) (includetext permitaddon dontdraw guarddescent=8 addondescent=0) [-0.1111  0.0   ] descents_tmpl
+
+% dontvalidatecheck replaces an incorrect check digit instead of raising an error
+{ (02345674) (dontvalidatecheck dontdraw) ean8 /sbs get } (0234567) (dontdraw) ean8 /sbs get isEqual

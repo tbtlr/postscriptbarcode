@@ -64,6 +64,7 @@ begin
     {
 
     /dontdraw false def
+    /dontvalidatecheck false def
     /includetext false def
     /text1font /Helvetica def
     /text1size 12.0 def
@@ -201,7 +202,7 @@ begin
         } ifelse
     } for
     /checksum 10 checksum 10 mod sub 10 mod def
-    barcode length 12 eq {
+    barcode length 12 eq dontvalidatecheck not and {
         barcode 11 get checksum 48 add ne {
             /bwipp.upcAbadCheckDigit (Incorrect UPC check digit provided) //raiseerror exec
         } if

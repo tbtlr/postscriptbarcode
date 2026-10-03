@@ -2,6 +2,7 @@ XXXX-XX-XX
 
 * A wideratio option was added to the two-width symbologies (Code 39, Interleaved 2 of 5, Codabar, Code 2 of 5, Code 11, MSI and Telepen, together with the encoders derived from them) to set the ratio of the wide elements to the narrow elements, within the range 2.0 to 3.0.
 * The barxmulttop and barxmultbottom options were added to GS1 DataBar Stacked, including its composite, to increase the heights of the top and bottom rows beyond their defaults of 5X and 7X.
+* A dontvalidatecheck option was added to EAN-13, EAN-8, UPC-A and UPC-E to replace an incorrect check digit in the input with the computed one instead of raising an error.
 * A provisional encoder for QR Code Model 1 was added. Symbols whose data codewords do not divide evenly between the error correction blocks are not yet supported for payloads approaching capacity.
 
 

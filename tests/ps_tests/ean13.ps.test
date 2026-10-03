@@ -265,3 +265,6 @@
 (9780123456786 12345) (includetext dontdraw guarddescent=8 addondescent=0) [-0.1111  0.0   ] descents_tmpl  % Both controlled independently
 % Same with EAN-2 add-on
 (9780123456786 12) (includetext dontdraw addondescent=0) [-0.0694 0.0] descents_tmpl
+
+% dontvalidatecheck replaces an incorrect check digit instead of raising an error
+{ (2112345678901) (dontvalidatecheck dontdraw) ean13 /sbs get } (211234567890) (dontdraw) ean13 /sbs get isEqual

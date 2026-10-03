@@ -1,0 +1,1023 @@
+% Barcode Writer in Pure PostScript
+% https://bwipp.terryburton.co.uk
+%
+% vim: set sw=4 sts=4 et:
+%
+% Copyright (c) 2004-2026 Terry Burton
+%
+% $Id$
+%
+% Permission is hereby granted, free of charge, to any
+% person obtaining a copy of this software and associated
+% documentation files (the "Software"), to deal in the
+% Software without restriction, including without
+% limitation the rights to use, copy, modify, merge,
+% publish, distribute, sublicense, and/or sell copies of
+% the Software, and to permit persons to whom the Software
+% is furnished to do so, subject to the following
+% conditions:
+%
+% The above copyright notice and this permission notice
+% shall be included in all copies or substantial portions
+% of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+% KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+% THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+% PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+% THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+% DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+% CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+% CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+% IN THE SOFTWARE.
+
+% --BEGIN ENCODER model1qrcode--
+% --REQUIRES preamble raiseerror setuphooks processoptions parseinput setanycolor render renmatrix--
+% --DESC: Model 1 QR Code
+% --EXAM: http://goo.gl/0bis
+% --EXOP: eclevel=M
+% --RNDR: renmatrix
+% --FMLY: Two-dimensional symbols
+currentglobal
+true setglobal
+/setpacking where {pop currentpacking true setpacking} if
+10 dict
+dup /raiseerror dup /uk.co.terryburton.bwipp findresource put
+dup /processoptions dup /uk.co.terryburton.bwipp findresource put
+dup /parseinput dup /uk.co.terryburton.bwipp findresource put
+dup /renmatrix dup /uk.co.terryburton.bwipp findresource put
+dup /setuphooks dup /uk.co.terryburton.bwipp findresource put
+begin
+
+/model1qrcode [/before /after] //setuphooks exec
+
+(setup.define) //model1qrcode.before exec
+
+/model1qrcode.latevars dup 64 dict def load /init {
+    currentglobal
+    true setglobal  % Lazy vars must be in global VM, like resource definitions
+
+    //model1qrcode.latevars begin
+
+    /fn1 -1 def
+
+
+    % Enumerate vergrps
+    [
+        /v1to9    /v10to14
+    ] 0 exch {1 index def 1 add} forall pop
+
+    % Convert from input into message bitstream
+    %
+    % Modes: (N)umeric, (A)lphanumeric, (B)yte, (K)anji
+    %
+    /N 0 def  /A 1 def  /B 2 def  /K 3 def
+
+    /Nexcl <<
+       [
+           16#30 1 16#39 {} for
+       ] {-1} forall
+    >> def
+
+    /Aexcl <<
+        [
+            16#20 16#24 16#25 16#2A 16#2B 16#2D 16#2E 16#2F 16#3A
+            16#41 1 16#5A {} for
+            fn1
+        ] {-1} forall
+    >> def
+
+    % Binary exclusives calculated from "not others"
+
+    /Kexcl <<
+        [
+            16#81 1 16#9F {} for
+            16#E0 1 16#EB {} for
+        ] {-1} forall
+    >> def
+
+    /mids [
+        %    N      A      B      K  
+        [ (0001) (0010) (0100) (1000)]  % v1to9
+        [ (0001) (0010) (0100) (1000)]  % v10to14
+    ] def
+
+    /cclens [  % N  A  B  K
+        [ 10  9  8  8 ]  % v1to9
+        [ 12 11 16 10 ]  % v10to14
+    ] def
+
+    /padstrs [ (11101100) (00010001) ] def
+    /padcws  [ 16#EC 16#11 ] def          % codeword form of padstrs
+
+    % Alphanumeric character to value map
+    /charmap (0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:) def
+    /charvals 44 dict def
+    0 1 44 {dup charmap exch get exch charvals 3 1 roll put} for
+
+
+    /versetmap <<
+         1 1  9 { 10 2 string cvrs v1to9   } for
+        10 1 14 { 10 2 string cvrs v10to14 } for
+    >> def
+    /verset [v1to9 v10to14] def
+
+    /mode0forceKB  [ 1  1  1] def
+    /mode0forceA   [ 1  1  1] def
+    /mode0forceN   [ 1  1  1] def
+
+    /mode0NbeforeB [ 4  4  5] def
+
+    /modeBKbeforeB [ 9 12 13] def
+    /modeBKbeforeA [ 8 10 11] def
+    /modeBKbeforeN [ 8  9 11] def
+
+    /modeBAbeforeK [11 12 14] def
+    /modeBAbeforeB [11 15 16] def
+    /modeBAbeforeN [12 13 15] def
+
+    /modeBNbeforeK [ 6  7  8] def
+    /modeBNbeforeB [ 6  8  9] def
+    /modeBNbeforeA [ 6  7  8] def
+
+    /modeANbeforeA [13 15 17] def
+    /modeANbeforeB [13 17 18] def
+
+    /metrics [
+        % vers  vergrp   rows  cols  modules  error codewords         error correction blocks
+        %                                       L    M    Q    H        L M Q H
+        [ (1)   v1to9    21    21     208     [   7   10   13   17 ]  [ 1 1 1 1 ] ]
+        [ (2)   v1to9    25    25     368     [  10   16   22   30 ]  [ 1 1 1 1 ] ]
+        [ (3)   v1to9    29    29     576     [  15   28   36   48 ]  [ 1 1 1 1 ] ]
+        [ (4)   v1to9    33    33     800     [  20   40   50   66 ]  [ 1 1 1 1 ] ]
+        [ (5)   v1to9    37    37    1072     [  26   52   66   88 ]  [ 1 1 1 2 ] ]
+        [ (6)   v1to9    41    41    1360     [  34   64   84  112 ]  [ 1 2 2 2 ] ]
+        [ (7)   v1to9    45    45    1696     [  42   80  104  138 ]  [ 1 2 2 3 ] ]
+        [ (8)   v1to9    49    49    2048     [  48   96  128  168 ]  [ 2 2 2 3 ] ]
+        [ (9)   v1to9    53    53    2448     [  60  120  150  204 ]  [ 2 2 3 3 ] ]
+        [ (10)  v10to14  57    57    2864     [  68  136  174  232 ]  [ 2 2 3 4 ] ]
+        [ (11)  v10to14  61    61    3328     [  80  160  208  270 ]  [ 2 4 4 5 ] ]
+        [ (12)  v10to14  65    65    3808     [  92  184  232  310 ]  [ 2 4 4 5 ] ]
+        [ (13)  v10to14  69    69    4336     [ 108  208  264  348 ]  [ 3 4 4 6 ] ]
+        [ (14)  v10to14  73    73    4880     [ 120  240  300  396 ]  [ 3 4 5 6 ] ]
+    ] def
+
+    /rsalog [ 1 255 { dup 2 mul dup 256 ge {285 xor} if } repeat ] def
+    /rslog 256 array def
+    1 1 255 {dup rsalog exch get exch rslog 3 1 roll put} for
+
+    /fpat [
+        [ 1 1 1 1 1 1 1 0 ]
+        [ 1 0 0 0 0 0 1 0 ]
+        [ 1 0 1 1 1 0 1 0 ]
+        [ 1 0 1 1 1 0 1 0 ]
+        [ 1 0 1 1 1 0 1 0 ]
+        [ 1 0 0 0 0 0 1 0 ]
+        [ 1 1 1 1 1 1 1 0 ]
+        [ 0 0 0 0 0 0 0 0 ]
+    ] def
+    /fnullpat [
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+        [ 9 9 9 9 9 9 9 9 ]
+    ] def
+
+    /extcornerpat [
+        [ 0 0 ]
+        [ 0 1 ]
+    ] def
+    /ext8mbasepat [
+        [ 0 0 0 0]
+        [ 1 1 1 1]
+    ] def
+    /ext8mrsidepat [
+        [ 0 1 ]
+        [ 0 1 ]
+        [ 0 1 ]
+        [ 0 1 ]
+    ] def
+
+    /fmtvals [
+        16#2825 16#2d12 16#224b 16#277c 16#39ce 16#3cf9 16#33a0 16#3697
+        16#0bf3 16#0ec4 16#019d 16#04aa 16#1a18 16#1f2f 16#1076 16#1541
+        16#6abe 16#6f89 16#60d0 16#65e7 16#7b55 16#7e62 16#713b 16#740c
+        16#4968 16#4c5f 16#4306 16#4631 16#5883 16#5db4 16#52ed 16#57da
+    ] def
+
+    % Redefine /init to just load cached values on subsequent calls
+    /init { //model1qrcode.latevars {def} forall } def
+
+    end
+
+    //model1qrcode.latevars /init get exec
+
+    setglobal
+} bind put
+
+/uk.co.terryburton.bwipp.global_ctx dup where {
+    exch get /preload known {//model1qrcode.latevars /init get exec} if
+} {pop} ifelse
+
+/model1qrcode {
+
+    256 dict begin
+    {
+
+    /dontdraw false def
+    /version (unset) def   % 1-14
+    /eclevel (unset) def   % L, M, Q, H
+    /parse false def
+    /parsefnc false def
+    /mask -1 def
+
+    null /apply //processoptions exec /options exch def
+    /barcode exch def
+
+    //model1qrcode.latevars /init get exec
+
+    /_render
+        dontdraw /uk.co.terryburton.bwipp.global_ctx dup where {exch get /enabledontdraw known} {pop false} ifelse and
+        /uk.co.terryburton.bwipp._dontdraw dup where {exch get} {pop false} ifelse or not
+    def
+
+    barcode () eq {
+        /bwipp.model1qrcodeEmptyData (The data must not be empty) //raiseerror exec
+    } if
+
+    % Default error correction level
+    eclevel (unset) eq {/eclevel (L) def} if
+
+    eclevel (L) ne eclevel (M) ne eclevel (Q) ne eclevel (H) ne and and and {
+        /bwipp.model1qrcodeInvalidEClevel (Error correction level must be either L, M, Q, or H) //raiseerror exec
+    } if
+
+    mask -1 ne {
+        mask 1 lt mask 8 gt or {
+            /bwipp.model1qrcodeBadMask (An invalid mask was supplied) //raiseerror exec
+        } if
+    } if
+
+    % Parse the input
+    /fn1 -1 def
+    /fncvals <<
+        /parse parse
+        /parsefnc parsefnc
+        (FNC1) fn1
+    >> def
+    /msg barcode fncvals //parseinput exec def
+    /msglen msg length def
+
+    % If FNC1 in first position then escape % as %%
+    /fnc1first false def
+    msglen 0 gt {
+        msg 0 get fn1 eq {
+            /fnc1first true def
+            /msg [ msg 1 msglen 1 sub getinterval { dup 37 eq {dup} if } forall ] def
+            /msglen msg length def
+        } if
+    } if
+
+    % Encoding functions
+    /tobin {
+        string dup length 1 sub 0 exch 1 exch {1 index exch 48 put} for
+        dup 3 -1 roll 2 2 index length string cvrs dup length 2 index length exch sub exch putinterval
+    } def
+
+    /encA {
+        /in exch def
+        fnc1first {  % FNC1 as %
+            /in [ in { dup fn1 eq {pop 37} if } forall ] def
+        } if
+        /out in length 11 mul 2 idiv 1 add string def
+        /k 0 def /m 0 def {
+            k in length eq {exit} if
+            k in length 1 sub lt {
+                charvals in k get get 45 mul charvals in k 1 add get get add 11 tobin
+                /k k 2 add def
+            } {  % Final character
+                charvals in k get get 6 tobin
+                /k k 1 add def
+            } ifelse
+            dup out exch m exch putinterval
+            length m add /m exch def
+        } loop
+        out 0 m getinterval
+    } def
+
+    /encN {
+        /in exch def
+        /out in length 10 mul 3 idiv 1 add string def
+        /k 0 def /m 0 def {
+            k in length eq {exit} if
+            k in length 2 sub lt {
+                in k 3 getinterval 0 exch {exch 10 mul 48 sub add} forall 10 tobin
+                /k k 3 add def
+            } {
+                k in length 2 sub eq {  % Two final digits
+                    in k 2 getinterval 0 exch {exch 10 mul 48 sub add} forall 7 tobin
+                    /k k 2 add def
+                } {  % One final digit
+                    in k 1 getinterval 0 exch {exch 10 mul 48 sub add} forall 4 tobin
+                    /k k 1 add def
+                } ifelse
+            } ifelse
+            dup out exch m exch putinterval
+            length m add /m exch def
+        } loop
+        out 0 m getinterval
+    } def
+
+    /encB {
+        /in exch def
+        fnc1first {  % FNC1 as GS
+            /in [ in { dup fn1 eq {pop 29} if } forall ] def
+        } if
+        /out in length 8 mul string def
+        0 1 in length 1 sub {
+            /k exch def
+            in k get cvi 8 tobin
+            out k 8 mul 3 -1 roll putinterval
+        } for
+        out
+    } def
+
+    /encK {
+        /in exch def
+        /out in length 2 idiv 13 mul string def
+        /k 0 def /m 0 def {
+            k in length eq {exit} if
+            in k get 256 mul in k 1 add get add
+            dup 16#E040 lt {16#8140} {16#C140} ifelse sub
+            dup -8 bitshift 16#C0 mul exch 16#00FF and add
+            13 tobin dup out exch m exch putinterval
+            length m add /m exch def
+            /k k 2 add def
+        } loop
+        out
+    } def
+
+    /encfuncs [ /encN /encA /encB /encK ] def
+
+    /addtobits {
+        dup bits j 3 -1 roll putinterval
+        length j add /j exch def
+    } def
+
+    /numNs [ msglen {0} repeat 0 ] def
+    /numAs [ msglen {0} repeat 0 ] def
+    /numAorNs [ msglen {0} repeat 0 ] def
+    /numBs [ msglen {0} repeat 0 ] def
+    /numKs [ msglen {0} repeat 0 ] def
+    /nextNs [ msglen {0} repeat 9999 ] def
+    /nextBs [ msglen {0} repeat 9999 ] def
+    /nextAs [ msglen {0} repeat 9999 ] def
+    /nextKs [ msglen {0} repeat 9999 ] def
+    msglen 1 sub -1 0 {
+        /i exch def
+        /barchar msg i get def
+        Kexcl barchar known {
+            /sjis i 1 add msglen lt { barchar 256 mul msg i 1 add get add } {0} ifelse def  % Zero if last char
+            sjis 16#8140 ge sjis 16#9FFC le and sjis 16#E040 ge sjis 16#EBBF le and or {
+                nextKs i 0 put
+                numKs i numKs i 2 add get 1 add put
+            } {
+                nextKs i nextKs i 1 add get 1 add put
+            } ifelse
+        } {
+            nextKs i nextKs i 1 add get 1 add put
+        } ifelse
+        Nexcl barchar known {
+            nextNs i 0 put
+            numNs i numNs i 1 add get 1 add put
+            numAorNs i numAorNs i 1 add get 1 add put
+        } {
+            nextNs i nextNs i 1 add get 1 add put
+        } ifelse
+        Aexcl barchar known {
+            nextAs i 0 put
+            numAs i numAs i 1 add get 1 add put
+            numAorNs i numAorNs i 1 add get 1 add put
+        } {
+            nextAs i nextAs i 1 add get 1 add put
+        } ifelse
+    } for
+    0 1 msglen 1 sub {  % Scan forward to set any "2nd byte 1st byte" Kanji matches to zero
+        /i exch def
+        numKs i get 0 gt {
+            numKs i 1 add 0 put
+            nextKs i 1 add nextKs i 1 add get 1 add put
+        } if
+    } for
+    msglen 1 sub -1 0 {  % Finally scan backwards again to set numBs/nextBs from "not others"
+        /i exch def
+        numNs i get numAs i get numKs i get add add 0 eq {
+            nextBs i 0 put
+            numBs i numBs i 1 add get 1 add put
+        } {
+            nextBs i nextBs i 1 add get 1 add put
+        } ifelse
+    } for
+
+    /KbeforeB {numK exch ver get ge nextBs numK 2 mul i add get 0 eq and} def
+    /KbeforeA {numK exch ver get ge nextAs numK 2 mul i add get 0 eq and} def
+    /KbeforeN {numK exch ver get ge nextNs numK 2 mul i add get 0 eq and} def
+    /AbeforeK {numA exch ver get ge nextKs numA i add get 0 eq and} def
+    /AbeforeB {numA exch ver get ge nextBs numA i add get 0 eq and} def
+    /AbeforeN {numA exch ver get ge nextNs numA i add get 0 eq and} def
+    /NbeforeK {numN exch ver get ge nextKs numN i add get 0 eq and} def
+    /NbeforeB {numN exch ver get ge nextBs numN i add get 0 eq and} def
+    /NbeforeA {numN exch ver get ge nextAs numN i add get 0 eq and} def
+    /AorNbeforeB {numAorN exch ver get ge nextBs numAorN i add get 0 eq and} def
+
+    /nextNslt { nextNs i get msglen ge { pop true } { numNs nextNs i get i add get exch ver get lt } ifelse } def
+
+    % Elements of the encoded message have differing lengths based on the
+    % resulting symbol size. The symbol sizes with different element lengths
+    % are batched into vergrps. To pick the smallest symbol that holds our
+    % content we encode the message according to each available vergrp, based
+    % on the format of symbol.
+
+    % Determine which groups we need to encode
+    version (unset) ne {
+        % A specific version of symbol is given so encode in just the corresponding vergrp
+        versetmap version 2 copy known not {
+            pop pop
+            /bwipp.model1qrcodeInvalidFullVersion (Valid versions for Model 1 QR Code symbols are 1 to 14) //raiseerror exec
+        } if
+        get [ exch ] /verset exch def
+    } if
+
+    % Encode unterminated bitstream for each compatible vergrp separately
+    /msgbits [ 39 {-1} repeat ] def
+    /e 10000 def
+
+    % Number of before characters per vergrp, depending on current mode, for optimising modes
+    % Generated by contrib/development/build-qr-mode-optim-arrs.php
+    %                Full   
+    verset {
+        /ver exch def
+
+        % Derive optimal sequence
+        /mode -1 def /seq [] def /i 0 def {
+            i msglen ge {exit} if
+            /numK numKs i get def
+            /numB numBs i get def
+            /numA numAs i get def
+            /numN numNs i get def
+            /numAorN numAorNs i get def
+            {  % common exit
+                mode -1 eq {  % Set initial mode
+                    mode0forceKB  KbeforeA {K exit} if
+                    mode0forceKB  KbeforeN {K exit} if
+                    numK 1 ge {B exit} if
+                    mode0NbeforeB NbeforeB {N exit} if
+                    mode0forceKB  NbeforeB {B exit} if
+                    B exit
+                } if
+                mode B eq {
+                    modeBKbeforeB KbeforeB {K exit} if
+                    modeBKbeforeA KbeforeA {K exit} if
+                    modeBKbeforeN KbeforeN {K exit} if
+                    modeBAbeforeK AbeforeK {A exit} if
+                    modeBAbeforeB AbeforeB {A exit} if
+                    modeBAbeforeN AbeforeN {A exit} if
+                    modeBNbeforeK NbeforeK {N exit} if
+                    modeBNbeforeB NbeforeB {N exit} if
+                    modeBNbeforeA NbeforeA {N exit} if
+                    B exit
+                } if
+                mode A eq {
+                    numK 1 ge {K exit} if
+                    numB 1 ge {B exit} if
+                    modeANbeforeA NbeforeA {N exit} if
+                    modeANbeforeB NbeforeB {N exit} if
+                    numA 1 ge numN 1 ge or {A exit} if
+                    B exit
+                } if
+                mode N eq {
+                    numK 1 ge {K exit} if
+                    numB 1 ge {B exit} if
+                    numA 1 ge {A exit} if
+                    numN 1 ge {N exit} if
+                    B exit
+                } if
+                mode K eq {
+                    numB 1 ge {B exit} if
+                    numA 1 ge {A exit} if
+                    numN 1 ge {N exit} if
+                    numK 1 ge {K exit} if
+                    B exit
+                } if
+            } loop
+            dup K eq fnc1first and {pop B} if  % No kanji with fnc1first
+            dup mode eq {  % Same mode encode directly
+                pop
+                /dat msg i mode K eq {2} {1} ifelse getinterval def
+                /seq [
+                    seq aload pop
+                    [ exch aload pop dat aload pop ]
+                ] def
+            } {  % Change mode
+                /mode exch def
+                mode K eq {K msg i numK 2 mul getinterval} if
+                mode B eq {B msg i numB getinterval} if
+                mode A eq {A msg i numA getinterval} if
+                mode N eq {N msg i numN getinterval} if
+                /dat exch def /sw exch def
+                /seq [ seq aload pop sw dat ] def
+            } ifelse
+            /i i dat length add def
+        } loop
+
+        % Encode the sequence
+        {  % common exit
+            seq -1 eq {exit} if  % Sequence not available
+            /bits 23648 string def
+            /j 0 def
+            fnc1first {
+                (0101) addtobits
+            } if
+            /abort false def
+            0 2 seq length 1 sub {
+                /i exch def
+                /mode seq i get def
+                mids ver get mode get addtobits
+                /chars seq i 1 add get def
+                /charslen chars length mode K eq {2 idiv} if def
+                /cclen cclens ver get mode get def
+                charslen 2 cclen exp cvi ge {  % Too many characters for cc indicator
+                    /abort true def exit
+                } if
+                charslen cclen tobin addtobits
+                chars encfuncs mode get load exec addtobits
+            } for
+            abort {exit} if
+            /bits bits 0 j getinterval def
+            msgbits ver bits put
+            exit
+        } loop
+    } forall
+
+    % Lookup the most appropriate symbol specification
+    /eclval (LMQH) eclevel search pop length exch pop exch pop def
+    0 1 metrics length 1 sub {
+        /i exch def
+        /m metrics i get def
+        /vers m 0 get def                         % Version of symbol
+        /vergrp m 1 get def                       % Version group
+        /verind i 44 sub def                      % Version indicator for rMQR format info
+        /rows m 2 get def                         % Length of side
+        /cols m 3 get def                         % Length of side
+        /nmod m 4 get def                         % Number of modules
+        /ncws nmod 8 idiv def                     % Total number of codewords
+        /ecws m 5 get eclval get def              % Number of error correction codewords
+        /dcws ncws ecws sub def                   % Number of data codewords
+        /dmod dcws 8 mul 4 sub def                % Number of data modules
+        /ecb m 6 get eclval get def               % Number of error correction blocks
+        /okay true def
+        version (unset) ne version vers ne and {/okay false def} if  % The version must match that supplied
+        ecb -1 eq {/okay false def} if            % Error correction level must be valid
+        /verbits msgbits vergrp get def
+        verbits -1 eq {                           % Bitstream must be available
+            /okay false def
+        } {
+            verbits length dmod gt {/okay false def} if  % and fit into data modules
+        } ifelse
+        /term (000000000) 0 4 getinterval def
+        okay {exit} if
+    } for
+
+    okay not {
+        /bwipp.model1qrcodeNoValidSymbol (Maximum length exceeded or invalid content) //raiseerror exec
+    } if
+
+    /version vers def
+    /msgbits verbits def
+    /dcpb dcws ecb idiv def                       % Base data codewords per block
+    /ecpb ncws ecb idiv dcpb sub def              % Error correction codewords per block
+
+    % Complete the message bits by adding the terminator, truncated if necessary
+    /term term 0 dmod msgbits length sub term length 2 copy gt {exch} if pop getinterval def
+    msgbits length term length add string
+    dup 0 msgbits putinterval
+    dup msgbits length term putinterval
+    /msgbits exch def
+
+    % Expand the message bits by adding padding as necessary
+    /pad dmod string def
+    0 1 pad length 1 sub {pad exch 48 put} for
+    pad 0 msgbits putinterval
+    /padnum 0 def
+    msgbits length dup 4 sub 8 mod 8 exch sub add 8 dmod 5 sub {
+        pad exch padstrs padnum get putinterval
+        /padnum padnum 1 add 2 mod def
+    } for
+
+    % Evaluate the padded message into codewords
+    /cws dcws array def
+    0 1 cws length 1 sub {
+        /c exch def
+        /bpcw 8 def
+        c 0 eq {
+            /bpcw 4 def
+            /cwb pad 0 bpcw getinterval def
+        } {
+            /cwb pad c 8 mul 4 sub bpcw getinterval def            
+        } ifelse
+        /cw 0 def
+        0 1 bpcw 1 sub {
+            /i exch def
+            /cw cw 2 bpcw i sub 1 sub exp cvi cwb i get 48 sub mul add def
+        } for
+        cws c cw put
+    } for
+
+    options /debugcws known { /bwipp.debugcws cws //raiseerror exec } if
+
+    % Calculate the log and anti-log tables
+    % Function to calculate the product in the field
+    /rsprod {
+        2 copy 0 ne exch 0 ne and {
+            rslog exch get exch rslog exch get add 255 mod rsalog exch get
+        } {
+            pop pop 0
+        } ifelse
+    } def
+
+    % Generate the coefficients for the Reed-Solomon algorithm
+    /coeffs [ 1 ecpb {0} repeat ] def
+    0 1 ecpb 1 sub {
+        /i exch def
+        coeffs i 1 add coeffs i get put
+        i -1 1 {
+            /j exch def
+            coeffs j coeffs j 1 sub get coeffs j get rsalog i get rsprod xor put
+        } for
+        coeffs 0 coeffs 0 get rsalog i get rsprod put
+    } for
+    /coeffs coeffs 0 coeffs length 1 sub getinterval def
+
+    % Reed-Solomon algorithm to derive the error correction codewords
+    /rscodes {
+        /rscws exch def
+        /rsnd rscws length def
+        /rscws [ rscws {} forall ecpb {0} repeat ] def
+        0 1 rsnd 1 sub {
+            /m exch def
+            /k rscws m get def
+            0 1 ecpb 1 sub {
+                /j exch def
+                rscws m j add 1 add coeffs ecpb j sub 1 sub get k rsprod rscws m j add 1 add get xor put
+            } for
+        } for
+        rscws rsnd ecpb getinterval
+    } def
+
+    % Divide codewords into groups of blocks and calculate the error correction codewords
+    /dcwsb ecb array def
+    /ecwsb ecb array def
+    0 1 ecb 1 sub {
+        /i exch def
+        dcwsb i cws i dcpb mul dcpb getinterval put
+        ecwsb i dcwsb i get rscodes put
+    } for
+
+    % Reassemble the codewords
+    /cws ncws array def
+    /cw 0 def
+    0 1 ecb 1 sub {
+        /i exch def
+        /dcws dcwsb i get def
+       0 1 dcpb 1 sub {
+            /j exch def
+            cws cw dcws j get put
+            /cw cw 1 add def
+        } for
+    } for
+    0 1 ecb 1 sub {
+        /i exch def
+        /ecws ecwsb i get def
+        0 1 ecpb 1 sub {
+            /j exch def
+            cws cw ecws j get put
+            /cw cw 1 add def
+        } for
+    } for
+
+    % Add remainder codewords
+    /padnum 0 def
+    cw 1 ncws 1 sub {
+        pop
+        cws cw padcws padnum get put
+        /cw cw 1 add def
+        /padnum padnum 1 add 2 mod def
+    } for
+
+    options /debugecc known { /bwipp.debugecc cws //raiseerror exec } if
+
+    % Create the bitmap
+    /pixs [ rows cols mul {-1} repeat ] def
+    /qmv {cols mul add} def
+
+    % Timing patterns
+    8 1 cols 9 sub {
+        /i exch def
+        pixs i 6 qmv i 1 add 2 mod put
+        pixs 6 i qmv i 1 add 2 mod put
+    } for
+
+    % Finder patterns
+    0 1 7 {
+      /y exch def
+      0 1 7 {
+        /x exch def
+        /fpb0 fpat y get x get def
+        /fpb1 fpat y get x get def
+        /fpb2 fpat y get x get def
+        /fpb3 fnullpat y get x get def
+        fpb0 9 ne y rows lt and {pixs x y qmv fpb0 put} if
+        fpb1 9 ne {pixs cols x sub 1 sub y qmv fpb1 put} if
+        fpb2 9 ne {pixs x rows y sub 1 sub qmv fpb2 put} if
+        fpb3 9 ne {pixs cols x sub 1 sub rows y sub 1 sub qmv fpb3 put} if
+      } for
+    } for
+
+    % Extension patterns
+    % Extension data at the corner
+    /row rows 2 sub def
+    /col cols 2 sub def
+    0 1 1 {
+        /r exch def
+        0 1 1 {
+            /c exch def
+            /extb extcornerpat r get c get def
+            pixs col c add row r add qmv extb put
+        } for
+    } for
+
+    /extn version cvi 2 idiv def                       % Number of eight module extension blocks
+    /extp version cvi 2 mod 1 eq {19} {15} ifelse def  % Position of first eight module extension block
+
+    extn 0 gt {
+        0 1 extn 1 sub {
+            pop
+
+            % Extension data at the base
+            /col cols extp sub def
+            /row rows 2 sub def
+            0 1 1 {
+                /r exch def
+                0 1 3 {
+                    /c exch def
+                    /extb ext8mbasepat r get c get def
+                    pixs col c add row r add qmv extb put
+                } for
+            } for
+
+            % Extension data at right side
+            /col cols 2 sub def
+            /row rows extp sub def
+            0 1 3 {
+                /r exch def
+                0 1 1 {
+                    /c exch def
+                    /extb ext8mrsidepat r get c get def
+                    pixs col c add row r add qmv extb put
+                } for
+            } for
+
+            /extp extp 8 add def
+        } for
+    } if
+
+    % Format information modules
+    /formatmap [
+        [ [ 0 8 ] [ 8 cols 1 sub ] ]  [ [ 1 8 ] [ 8 cols 2 sub ] ]  [ [ 2 8 ] [ 8 cols 3 sub ] ]
+        [ [ 3 8 ] [ 8 cols 4 sub ] ]  [ [ 4 8 ] [ 8 cols 5 sub ] ]  [ [ 5 8 ] [ 8 cols 6 sub ] ]
+        [ [ 7 8 ] [ 8 cols 7 sub ] ]  [ [ 8 8 ] [ cols 8 sub 8 ] ]  [ [ 8 7 ] [ cols 7 sub 8 ] ]
+        [ [ 8 5 ] [ cols 6 sub 8 ] ]  [ [ 8 4 ] [ cols 5 sub 8 ] ]  [ [ 8 3 ] [ cols 4 sub 8 ] ]
+        [ [ 8 2 ] [ cols 3 sub 8 ] ]  [ [ 8 1 ] [ cols 2 sub 8 ] ]  [ [ 8 0 ] [ cols 1 sub 8 ] ]
+    ] def
+    formatmap {
+        { {} forall qmv pixs exch 1 put } forall
+    } forall
+
+    % Reserve the solitary dark module
+    pixs 8 rows 8 sub qmv 0 put
+
+    % Calculate the mask patterns
+    /maskfuncs [
+        {add 2 mod}
+        {exch pop 2 mod}
+        {pop 3 mod}
+        {add 3 mod}
+        {2 idiv exch 3 idiv add 2 mod}
+        {mul dup 2 mod exch 3 mod add}
+        {mul dup 2 mod exch 3 mod add 2 mod}
+        {2 copy mul 3 mod 3 1 roll add 2 mod add 2 mod}
+    ] def
+    mask -1 ne {  % User specifies a mask
+        /maskfuncs [maskfuncs mask 1 sub get] def
+        /bestmaskval mask 1 sub def
+    } if
+    /masks maskfuncs length array def
+    0 1 masks length 1 sub {
+        /m exch def
+        /mask rows cols mul array def
+        0 1 rows 1 sub {
+            /j exch def
+            0 1 cols 1 sub {
+                /i exch def
+                i j maskfuncs m get exec 0 eq
+                pixs i j qmv get -1 eq and {1} {0} ifelse
+                mask i j qmv 3 -1 roll put
+            } for
+        } for
+        masks m mask put
+    } for
+
+    % Walk the symbol placing the bitstream
+    /posx cols 1 sub def
+    /posy rows 3 sub def
+    /rmb 1 def
+    /col rmb def
+    /num 4 def
+    { % loop
+        posx 0 lt {exit} if
+        pixs posx posy qmv get -1 eq {
+            cws num 8 idiv get 7 num 8 mod sub neg bitshift 1 and
+            pixs posx posy qmv 3 -1 roll put
+            /num num 1 add def
+        } if
+        col 0 gt {
+            /col col 1 sub def
+            /posx posx 1 sub def
+        } {
+            /posx posx rmb add def
+            /posy posy 1 sub def
+            posy 0 lt {
+                /posx posx rmb 1 add sub def
+                /posy rows 1 sub def
+                % First two and last four columns of character symbols are vertically arranged
+                posx cols 4 sub lt posx 8 gt and {
+                    /rmb 3 def
+                } {
+                    /rmb 1 def
+                } ifelse
+                % Hop over the timing pattern
+                posx 6 eq {/posx posx 1 sub def} if
+            } if
+            /col rmb def
+        } ifelse
+    } loop
+
+    % Evaluate runlength encoded rows or columns
+    /evaln1n3 {
+        /scrle exch def
+        % Detect runs of 5 or more like modules
+        /scr1 0 scrle { dup 5 ge {add 2 sub dup} if pop } forall def
+        % Detect 1:1:3:1:1 ratio next to 4 modules of whitespace
+        /scr3 0 def
+        3 2 scrle length 3 sub {  % Scan odd (dark) runs within bounds
+            /j exch def
+            scrle j get 3 mod 0 eq {  % Multiple of 3 black modules
+                /fact scrle j get 3 idiv def
+                scrle j 2 sub 5 getinterval {fact eq} forall and exch pop and and {
+                    j 3 eq j 4 add scrle length ge or {  % At either extent of run
+                        /scr3 scr3 40 add def
+                    } {  % Bounded by dark modules
+                        scrle j 3 sub get 4 ge scrle j 3 add get 4 ge or {
+                            /scr3 scr3 40 add def
+                        } if
+                    } ifelse
+                } if
+            } if
+        } for
+        scr1 scr3
+    } def
+
+    % Evaluation algorithm
+    /eval {
+        /sym exch def
+
+        /n1 0 def /n2 0 def /n3 0 def
+        /rle cols 1 add array def
+        /lastpairs cols array def
+        /thispairs cols array def
+        /colsadd1 cols 1 add def
+        0 1 cols 1 sub {
+            /i exch def
+
+            % Runlength encode (light, dark, light, ...) and evaluate each column
+            mark 0 0
+            i cols dup dup mul 1 sub {
+                sym exch get exch 1 index eq {exch 1 add exch} {1 exch} ifelse
+            } for
+            pop
+            rle 0 counttomark 2 sub getinterval astore
+            evaln1n3 n3 add /n3 exch def n1 add /n1 exch def
+            pop
+
+            % Runlength encode (light, dark, light, ...) and evaluate each row
+            /symrow sym i cols mul cols getinterval def
+            mark 0 0
+            symrow {
+                exch 1 index eq {exch 1 add exch} {1 exch} ifelse
+            } forall
+            pop
+            rle 0 counttomark 2 sub getinterval astore
+            evaln1n3 n3 add /n3 exch def n1 add /n1 exch def
+            pop
+
+            % Count and score same coloured blocks
+            /lastpairs thispairs /thispairs lastpairs def def
+            symrow 0 get 1 eq {0} {1} ifelse
+            symrow {exch 1 index add exch} forall
+            pop
+            thispairs astore pop
+            i 0 gt {
+                mark
+                lastpairs aload pop thispairs aload pop
+                n2 cols { exch colsadd1 index add 3 and 0 eq {3 add} if } repeat
+                /n2 exch def
+                cleartomark
+            } if
+
+        } for
+
+        % Score dark/light imbalance
+        /dark 0 sym {add} forall def
+        /n4 dark 100 mul cols dup mul div 50 sub abs 5 div cvi 10 mul def
+
+        n1 n2 add n3 add n4 add
+    } def
+
+    % Evaluate the masked symbols to find the most suitable
+    /bestscore 999999999 def
+    0 1 masks length 1 sub {
+        /m exch def
+        /masksym rows cols mul array def
+        0 1 rows cols mul 1 sub {
+            /i exch def
+            masksym i pixs i get masks m get i get xor put
+        } for
+        masks length 1 ne {  % Not user-specified mask
+            masksym eval /score exch def
+            score bestscore lt {
+                /bestsym masksym def
+                /bestmaskval m def
+                /bestscore score def
+            } if
+        } {
+            /bestsym masksym def
+        } ifelse
+    } for
+    /pixs bestsym def
+
+    % Set the solitary dark module
+    pixs 8 cols 8 sub qmv 1 put
+
+    % Add the format information
+    /ecid (MLHQ) eclevel search pop length exch pop exch pop def
+    /fmtval fmtvals ecid 3 bitshift bestmaskval add get def
+    0 1 formatmap length 1 sub {
+        /i exch def
+        formatmap i get {
+            pixs exch aload pop qmv fmtval 14 i sub neg bitshift 1 and put
+        } forall
+    } for
+
+    % Return the arguments
+    <<
+    /ren /renmatrix
+    /pixs pixs
+    /pixx cols
+    /pixy rows
+    /height rows 2 mul 72 div
+    /width cols 2 mul 72 div
+    /borderleft 4.0
+    /borderright 4.0
+    /bordertop 4.0
+    /borderbottom 4.0
+    /opt options
+    >>
+
+    _render //renmatrix if
+
+    } stopped {end stop} if
+    end
+
+}
+[/barcode] {null def} forall
+bind def
+/model1qrcode dup load executeonly /uk.co.terryburton.bwipp defineresource pop
+(setup.define) //model1qrcode.after exec
+end
+/setpacking where {pop setpacking} if
+setglobal
+% --END ENCODER model1qrcode--

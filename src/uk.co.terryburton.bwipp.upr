@@ -93,6 +93,7 @@ qrcode=uk.co.terryburton.bwipp/qrcode
 swissqrcode=uk.co.terryburton.bwipp/swissqrcode
 microqrcode=uk.co.terryburton.bwipp/microqrcode
 rectangularmicroqrcode=uk.co.terryburton.bwipp/rectangularmicroqrcode
+model1qrcode=uk.co.terryburton.bwipp/model1qrcode
 maxicode=uk.co.terryburton.bwipp/maxicode
 azteccode=uk.co.terryburton.bwipp/azteccode
 azteccodecompact=uk.co.terryburton.bwipp/azteccodecompact

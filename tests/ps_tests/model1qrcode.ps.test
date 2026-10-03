@@ -1,0 +1,106 @@
+% Barcode Writer in Pure PostScript
+% https://bwipp.terryburton.co.uk
+%
+% vim: set sw=4 sts=4 et:
+%
+% Copyright (c) 2004-2026 Terry Burton
+%
+
+% ISO/IEC 18004:2015 Annex K (Model 1 symbols)
+
+/model1qrcode dup /uk.co.terryburton.bwipp findresource cvx def
+
+/eq_tmpl {
+    3 1 roll { 0 0 model1qrcode /pixs get }
+    dup 3 -1 roll 1 exch put
+    dup 3 -1 roll 0 exch put
+    isEqual
+} def
+
+/er_tmpl {
+    3 1 roll { 0 0 model1qrcode }
+    dup 3 -1 roll 1 exch put
+    dup 3 -1 roll 0 exch put
+    exch isError
+} def
+
+
+%
+% Error tests
+%
+
+% Empty data
+() (dontdraw) /bwipp.model1qrcodeEmptyData er_tmpl
+
+% Invalid error correction level (valid: L, M, Q, H)
+(TEST) (eclevel=A dontdraw) /bwipp.model1qrcodeInvalidEClevel er_tmpl
+(TEST) (eclevel=LL dontdraw) /bwipp.model1qrcodeInvalidEClevel er_tmpl
+
+% Invalid mask (valid: 1-8, or unset for automatic selection)
+(TEST) (mask=0 dontdraw) /bwipp.model1qrcodeBadMask er_tmpl
+(TEST) (mask=9 dontdraw) /bwipp.model1qrcodeBadMask er_tmpl
+
+% Invalid version (valid: 1-14)
+(TEST) (version=15 dontdraw) /bwipp.model1qrcodeInvalidFullVersion er_tmpl
+
+% Data too long for the largest symbol
+{ 2000 string 0 1 1999 { 1 index exch 49 put } for (dontdraw) model1qrcode } /bwipp.model1qrcodeNoValidSymbol isError
+
+
+%
+% Smoke tests
+%
+
+{ (TEST) (dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=1 dontdraw) model1qrcode pop true } true isEqual
+% Every version must place its extension patterns within bounds.  Versions >= 2
+% carry (version idiv 2) eight-module extension blocks at extp, extp+8, ...
+{ (TEST) (version=1 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=2 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=3 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=4 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=5 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=6 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=7 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=8 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=9 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=10 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=11 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=12 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=13 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=14 dontdraw) model1qrcode pop true } true isEqual
+
+% Each error correction level across a representative spread of versions
+{ (TEST) (version=1 eclevel=L dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=1 eclevel=M dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=1 eclevel=Q dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=1 eclevel=H dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=7 eclevel=L dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=7 eclevel=M dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=7 eclevel=Q dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=7 eclevel=H dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=13 eclevel=L dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=13 eclevel=M dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=13 eclevel=Q dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=13 eclevel=H dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=14 eclevel=L dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=14 eclevel=M dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=14 eclevel=Q dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (version=14 eclevel=H dontdraw) model1qrcode pop true } true isEqual
+
+% KNOWN LIMITATION: for 13 of the 56 version/eclevel combinations, dcws is not
+% divisible by ecb, and the block splitter
+%     dcwsb i cws i dcpb mul dcpb getinterval put
+% takes a uniform dcpb codewords per block.  The trailing (dcws - ecb*dcpb) data
+% codewords are therefore never read and are replaced by pad codewords, so data
+% is silently lost once the payload fills the symbol.  Affected: v7/H v8/H v10/Q
+% v10/H v11/H v12/H v13/L v13/M v13/Q v13/H v14/L v14/M v14/H.  Fixing this needs
+% QR's mixed short/long block structure; until then these combinations must not
+% be used with payloads that approach capacity.
+
+{ (TEST) (eclevel=L dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (eclevel=M dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (eclevel=Q dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (eclevel=H dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (mask=1 dontdraw) model1qrcode pop true } true isEqual
+{ (TEST) (mask=8 dontdraw) model1qrcode pop true } true isEqual

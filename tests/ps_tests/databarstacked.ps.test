@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2024 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 % ISO/IEC 24724:2011
@@ -52,3 +52,11 @@
 
 % propspec smoke test
 { 0 0 moveto (\(01\)09521234543213) (propspec) databarstacked true } true isEqual
+
+% Row heights default to 5X and 7X and may be increased
+{ (\(01\)09521234543213) (dontdraw) databarstacked /rowheights get } [5 1 7] isEqual
+{ (\(01\)09521234543213) (dontdraw) databarstacked /pixy get } 13 isEqual
+{ (\(01\)09521234543213) (barxmulttop=15 barxmultbottom=17 dontdraw) databarstacked /rowheights get } [15 1 17] isEqual
+{ (\(01\)09521234543213) (barxmulttop=15 barxmultbottom=17 dontdraw) databarstacked /pixy get } 33 isEqual
+{ (\(01\)09521234543213) (barxmulttop=4 dontdraw) databarstacked } /bwipp.databarStackedBarXmultTop isError
+{ (\(01\)09521234543213) (barxmultbottom=6 dontdraw) databarstacked } /bwipp.databarStackedBarXmultBottom isError

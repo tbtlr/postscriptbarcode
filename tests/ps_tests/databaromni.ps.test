@@ -44,6 +44,10 @@
 % Minimum barxmult for stacked omnidirectional
 { (\(01\)09521234543213) (barxmult=32 dontdraw) databaromni } /bwipp.databarStackedOmniBarXmult isError
 
+% Minimum row heights for stacked
+{ (\(01\)09521234543213) (format=stacked barxmulttop=4 dontdraw) databaromni } /bwipp.databarStackedBarXmultTop isError
+{ (\(01\)09521234543213) (format=stacked barxmultbottom=6 dontdraw) databaromni } /bwipp.databarStackedBarXmultBottom isError
+
 %
 % Smoke test: strictspec renders without error
 %

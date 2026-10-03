@@ -3,7 +3,7 @@
 %
 % vim: set sw=4 sts=4 et:
 %
-% Copyright (c) 2004-2024 Terry Burton
+% Copyright (c) 2004-2026 Terry Burton
 %
 
 % ISO/IEC 24723:2010
@@ -122,3 +122,8 @@
 /uk.co.terryburton.bwipp.global_ctx << /enabledebug true /enabledontdraw true /loosespec true >> def
 { 0 0 moveto (\(01\)09521234543213|\(17\)010200) () databarstackedcomposite true } true isEqual
 /uk.co.terryburton.bwipp.global_ctx tmp def
+
+% Linear component row heights propagate beneath the 2D component
+{ (\(01\)09521234543213|\(17\)010200) (barxmulttop=15 barxmultbottom=17 dontdraw) databarstackedcomposite
+  /rowheights get dup length 3 sub 3 getinterval } [15 1 17] isEqual
+{ (\(01\)09521234543213|\(17\)010200) (barxmulttop=4 dontdraw) databarstackedcomposite } /bwipp.databarStackedBarXmultTop isError

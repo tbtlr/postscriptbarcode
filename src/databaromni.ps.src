@@ -92,6 +92,8 @@ begin
     /linkage false def
     /format (omni) def
     /barxmult 33 def
+    /barxmulttop 5 def
+    /barxmultbottom 7 def
 
     /propspec false def
     /loosespec false def
@@ -128,6 +130,14 @@ begin
 
     barxmult 33 lt {
         /bwipp.databarStackedOmniBarXmult (GS1 DataBar Stacked Omnidirectional must have a barxmult of at least 33) //raiseerror exec
+    } if
+
+    barxmulttop 5 lt {
+        /bwipp.databarStackedBarXmultTop (GS1 DataBar Stacked must have a barxmulttop of at least 5) //raiseerror exec
+    } if
+
+    barxmultbottom 7 lt {
+        /bwipp.databarStackedBarXmultBottom (GS1 DataBar Stacked must have a barxmultbottom of at least 7) //raiseerror exec
     } if
 
     format (omni) ne format (stacked) ne and format (stackedomni) ne and format (truncated) ne and {
@@ -452,8 +462,8 @@ begin
                 sep aload pop
                 bot aload pop
             ] def
-            /rowheights [5 1 7] def
-            /pixy 13 def
+            /rowheights [barxmulttop 1 barxmultbottom] def
+            /pixy barxmulttop barxmultbottom add 1 add def
         } if
 
         %
